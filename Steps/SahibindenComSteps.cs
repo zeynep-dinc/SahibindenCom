@@ -1,7 +1,9 @@
-﻿using NUnit.Framework;
+﻿using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
+using System.Linq.Expressions;
 using System.Threading;
 using TechTalk.SpecFlow;
 
@@ -18,59 +20,55 @@ namespace SahibindenCom.Steps
         [Given(@"go to url sahibinden\.com")]
         public void GivenGoToUrlSahibinden_Com()
         {
-            driver = new ChromeDriver();
-            driver.Navigate().GoToUrl(url);
-            driver.Manage().Window.FullScreen();
-            string a = driver.Url.ToString();
-            while (a == "Sahibinden Satılık, Kiralık, Emlak, Oto, Alışveriş Ürünleri")
+            try
             {
-                Thread.Sleep(beklemeSuresi);
-                beklemeSuresi = +5;
-                if (beklemeSuresi > 10)
+                driver = new ChromeDriver();
+                driver.Navigate().GoToUrl(url);
+                driver.Manage().Window.FullScreen();
+                string a = driver.Url.ToString();
+                while (a == "Sahibinden Satılık, Kiralık, Emlak, Oto, Alışveriş Ürünleri")
                 {
-                    Console.WriteLine("10 saniye geçildiği için uygulama kapatıldı");
-                    driver.Close();
+                    Thread.Sleep(beklemeSuresi);
+                    beklemeSuresi = +5;
+                    if (beklemeSuresi > 10)
+                    {
+                        Console.WriteLine("10 saniye geçildiği için uygulama kapatıldı");
+                        driver.Close();
+                    }
                 }
+                Console.WriteLine("doğrulama {0} sürede yapıldı", beklemeSuresi);
             }
-            Console.WriteLine("doğrulama {0} sürede yapıldı", beklemeSuresi);
+            catch(Exception hata)
+            {
+                Console.WriteLine("Kaynak: ",hata.Source,"Mesaj: ",hata.Message);
+            }
         }
 
         [When(@"search malikane")]
         public void WhenSearchMalikane()
         {
-            IWebElement element = driver.FindElement(By.Name("query_text"));
-            element.Click();
-            element.SendKeys("malikane" + Keys.Enter);
-
-        }
-
-        [When(@"control the found list")]
-        public void WhenControlTheFoundList()
-        {
-            beklemeSuresi = 0;
-            String a=driver.FindElement(By.ClassName("facetedFilteredLink")).Text;
-            while (beklemeSuresi == 10)
+            try
             {
-                Thread.Sleep(beklemeSuresi);
-                if (a == "malikane")
-                {
-                    Console.WriteLine("Malikane değeri bulundu.");
-                }
-                else
-                {
-                    driver.Close();
-                    Console.WriteLine("değer eşleşmedi");
-                }
+
+                IWebElement element = driver.FindElement(By.Name("query_text"));
+                element.Click();
+                element.SendKeys("malikane" + Keys.Enter);
             }
-            Console.WriteLine("doğrulama {0} sürede yapıldı", beklemeSuresi);
+            catch (NotFoundException found)
+            {
+                Console.WriteLine(found.Message);
+            }
+            catch(Exception hata)
+            {
+                Console.WriteLine("Hata Kaynağı: ",hata.Source,"Mesaj: ",hata.Message);
+            }
         }
-        
-        [When(@"write found good score")]
-        public void WhenWriteFoundGoodScore()
+
+        [Then(@"finish the test")]
+        public void ThenFinishTheTest()
         {
-            string score = driver.FindElement(By.XPath("//*[@id=\"searchResultsSearchForm\"]/div/div[3]/div[1]/div[2]/div[1]/div[1]/span")).Text;
-            Console.WriteLine("Ürün sayısı= ", score);
-            driver.Quit();
+            driver.Close();
         }
+
     }
 }
